@@ -1,0 +1,27 @@
+﻿@model TappiruServer.Models.LoginModel
+
+<div class="register-container">
+    <div class="register-card">
+    <h1>Вход</h1>
+    <form method="post">
+        <div asp-validation-summary="All" class="text-danger"></div>
+            <div>
+                <label asp-for="UserName"></label>
+                <input asp-for="UserName" class="form-control" />
+                <span asp-validation-for="UserName" class="validation-message"></span>
+            </div>
+            <div>
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" class="form-control" />
+                <span asp-validation-for="Password" class="validation-message"></span>
+            </div>
+            <div>
+                <label asp-for="RememberMe"></label>
+                <input asp-for="RememberMe" class="form-control" type="checkbox" />
+            </div>
+            <button type="submit" class="register-btn">Войти</button>
+    </form>
+        <div class="login-link">
+            Нет аккаунта? <a asp-controller="Registration" asp-action="Register">Зарегистрироваться</a>
+</div>
+    </div>
