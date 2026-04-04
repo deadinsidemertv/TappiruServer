@@ -1,0 +1,48 @@
+﻿@model Feedback
+@{
+    ViewData["Title"] = "Обратная связь";
+}
+
+<div class="feedback-page">
+    <div class="feedback-header">
+        <h1>Обратная связь</h1>
+        <p>Напишите нам, мы всегда рады помочь и услышать ваши идеи для Tappiru.</p>
+    </div>
+
+    <form method="post" asp-controller="Contacts" asp-action="Check" class="feedback-form">
+        <div class="form-group">
+            <label asp-for="Name"></label>
+            <input asp-for="Name" class="form-control" placeholder="Алексей" />
+            <span asp-validation-for="Name" class="validation-message"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Surname"></label>
+            <input asp-for="Surname" class="form-control" placeholder="Иванов" />
+            <span asp-validation-for="Surname" class="validation-message"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="MMR"></label>
+            <input asp-for="MMR" class="form-control" placeholder="Ваш рейтинг (опционально)" />
+            <span asp-validation-for="MMR" class="validation-message"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" class="form-control" placeholder="example@tappiru.com" />
+            <span asp-validation-for="Email" class="validation-message"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Message"></label>
+            <textarea asp-for="Message" class="form-control" rows="5" placeholder="Ваше сообщение..."></textarea>
+            <span asp-validation-for="Message" class="validation-message"></span>
+        </div>
+
+        <button type="submit" class="submit-btn">
+            <span>Отправить</span>
+            <span class="btn-icon">→</span>
+        </button>
+    </form>
+</div>

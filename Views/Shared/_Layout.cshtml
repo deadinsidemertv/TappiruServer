@@ -1,50 +1,95 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TappiruServer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>@ViewData["Title"] - Tappiru</title>
     <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TappiruServer.styles.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TappiruServer</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+    <div class="app-wrapper">
+        <!-- Шапка с современным дизайном -->
+        <header class="site-header">
+            <div class="container header-container">
+                <div class="logo-wrapper">
+                    <span class="logo-icon">🎵</span>
+                    <span class="logo-text">Tappiru</span>
+                    <span class="logo-badge">BETA</span>
+                </div>
+                <nav class="main-nav">
+                    <a href="/" class="nav-link active">Главная</a>
+                    <a href="/rating" class="nav-link">Рейтинг</a>
+                    <a href="/maps" class="nav-link">Карты</a>
+                    <a href="/leaderboard" class="nav-link">Турниры</a>
+                    <a href="/contacts" class="nav-link">Обратная связь</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="btn-icon" aria-label="Поиск">🔍</button>
+                    <button class="btn-icon" aria-label="Уведомления">🔔</button>
+                    <div class="user-profile">
+                        <div class="avatar-placeholder"></div>
+                        <span class="username">Игрок</span>
+                    </div>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+        </header>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - TappiruServer - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+        <!-- Основной контент (динамический) -->
+        <main class="site-main">
+            <div class="container main-container">
+                @RenderBody()
+            </div>
+        </main>
+
+        <!-- Современный футер -->
+        <footer class="site-footer">
+            <div class="container footer-container">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="logo-icon">🎵</span>
+                        <span>Tappiru</span>
+                    </div>
+                    <p class="footer-description">
+                        Ритм-игра с уникальной механикой печати.<br />
+                        Соревнуйся, создавай карты, становись лучшим.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link">Discord</a>
+                        <a href="#" class="social-link">Telegram</a>
+                        <a href="#" class="social-link">YouTube</a>
+                        <a href="#" class="social-link">GitHub</a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <div class="links-column">
+                        <h4>Игра</h4>
+                        <a href="#">Рейтинг</a>
+                        <a href="#">Карты</a>
+                        <a href="#">Турниры</a>
+                        <a href="#">Достижения</a>
+                    </div>
+                    <div class="links-column">
+                        <h4>Сообщество</h4>
+                        <a href="#">Форум</a>
+                        <a href="#">Создание карт</a>
+                        <a href="#">Помощь</a>
+                        <a href="#">Правила</a>
+                    </div>
+                    <div class="links-column">
+                        <h4>О нас</h4>
+                        <a href="/contacts">Контакты</a>
+                        <a href="#">Политика</a>
+                        <a href="#">Лицензии</a>
+                    </div>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2025 Tappiru. Все права защищены.</p>
+                    <p class="music-credit">Музыка и ритм — наше всё.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
 </body>
 </html>
