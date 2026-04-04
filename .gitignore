@@ -1,0 +1,70 @@
+# Ignore compiled outputs
+bin/
+obj/
+
+# Ignore user-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.csproj.user
+
+# Ignore package manager files
+packages/
+*.nupkg
+
+# Ignore Rider / Visual Studio Code folders
+.idea/
+.vs/
+.vscode/
+
+# Ignore build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+
+# Ignore local configuration files
+appsettings.Development.json
+appsettings.Local.json
+
+# Ignore log files
+*.log
+*.logs
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore database files
+*.mdf
+*.ldf
+*.db
+
+# Ignore published output
+publish/
+[Pp]ublished/
+
+# Ignore node modules (if using JavaScript/TypeScript)
+node_modules/
+
+# Ignore wwwroot/lib (if using client-side libraries)
+wwwroot/lib/
+
+# Ignore Blazor static web assets
+*.staticwebassets.runtime.json
+
+# Ignore test results
+TestResults/
+
+# Ignore health check endpoints (if any)
+healthchecks.json
+
+# Ignore .NET Core CLI tool store
+.dotnet/
+.tools/
+
+# Ignore local secrets
+secrets.json
