@@ -13,7 +13,7 @@ obj/
 packages/
 *.nupkg
 
-# Ignore Rider / Visual Studio Code folders
+# Ignore Visual Studio / Rider folders
 .idea/
 .vs/
 .vscode/
@@ -53,14 +53,8 @@ node_modules/
 # Ignore wwwroot/lib (if using client-side libraries)
 wwwroot/lib/
 
-# Ignore Blazor static web assets
-*.staticwebassets.runtime.json
-
 # Ignore test results
 TestResults/
-
-# Ignore health check endpoints (if any)
-healthchecks.json
 
 # Ignore .NET Core CLI tool store
 .dotnet/

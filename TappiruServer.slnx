@@ -1,6 +1,3 @@
 <Solution>
-  <Project Path="TappiruServer.ApiService/TappiruServer.ApiService.csproj" />
-  <Project Path="TappiruServer.AppHost/TappiruServer.AppHost.csproj" />
-  <Project Path="TappiruServer.ServiceDefaults/TappiruServer.ServiceDefaults.csproj" />
-  <Project Path="TappiruServer.Web/TappiruServer.Web.csproj" />
+  <Project Path="TappiruServer.csproj" />
 </Solution>
