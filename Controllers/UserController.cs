@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -8,8 +9,8 @@ namespace TappiruServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
-    public class UserController : Controller
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]  // ← КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
+    public class UserController : ControllerBase   // Лучше наследовать от ControllerBase для API
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
@@ -22,20 +23,22 @@ namespace TappiruServer.Controllers
         public async Task<IActionResult> GetCurrentUser()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "Не удалось определить пользователя" });
 
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
+            if (user == null)
+                return NotFound(new { message = "Пользователь не найден" });
 
             return Ok(new
             {
-                user.UserName,
-                user.Email,
-                user.Rating,
-                user.AvatarPath,
-                user.PlayCount,
-                user.AllTimeChar,
-                user.RegistrationDate
+                userName = user.UserName,
+                email = user.Email,
+                rating = user.Rating,
+                avatarPath = user.AvatarPath ?? "",        // ← возвращаем AvatarPath
+                playCount = user.PlayCount,
+                allTimeChar = user.AllTimeChar,
+                registrationDate = user.RegistrationDate
             });
         }
     }
