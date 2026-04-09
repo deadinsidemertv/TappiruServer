@@ -20,7 +20,7 @@
                     <a href="/" class="nav-link">Главная</a>
                     @if (User.Identity.IsAuthenticated)
                     {
-                        <span class="nav-link">Привет, @User.Identity.Name!</span>
+                        <a asp-controller="Profile" asp-action="Profile" class="nav-link">@User.Identity.Name</a>
                         <form asp-controller="Registration" asp-action="Logout" method="post" style="display:inline;">
                             <button type="submit" class="nav-link" style="background:none; border:none; cursor:pointer;">Выйти</button>
                         </form>

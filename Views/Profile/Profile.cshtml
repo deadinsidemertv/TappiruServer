@@ -1,0 +1,415 @@
+﻿@model TappiruServer.Models.ProfileViewModel
+
+@{
+    ViewData["Title"] = $"{Model.UserName} · профиль игрока";
+}
+
+<div class="osu-profile">
+    <!-- Обложка профиля -->
+    <div class="profile-cover" style="background-image: url('@(Model.CoverUrl ?? "/images/default-cover.jpg")');">
+        <div class="cover-overlay"></div>
+        <div class="cover-stats">
+            <div class="cover-stat">
+                <div class="cover-stat-label">Глобальный рейтинг</div>
+                <div class="cover-stat-value">#@Model.GlobalRank.ToString("N0")</div>
+            </div>
+            <div class="cover-stat">
+                <div class="cover-stat-label">Страна</div>
+                <div class="cover-stat-value">@Model.CountryCode · #@Model.CountryRank</div>
+            </div>
+            <div class="cover-stat">
+                <div class="cover-stat-label">PP</div>
+                <div class="cover-stat-value">@Model.PP.ToString("F2")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <!-- Левая колонка: аватар и информация -->
+        <div class="profile-sidebar">
+            <div class="avatar-container">
+                <img class="avatar" src="@(string.IsNullOrEmpty(Model.AvatarPath) ? "/images/default-avatar.png" : Model.AvatarPath)" alt="avatar">
+                @if (Model.IsOwnProfile)
+                {   
+                    <form asp-controller="Profile" asp-action="UploadAvatar" method="post" enctype="multipart/form-data" class="avatar-upload-form">
+                        <label for="avatarFile" class="avatar-upload-btn">📷</label>
+                        <input type="file" id="avatarFile" name="avatarFile" accept="image/jpeg,image/png,image/gif" style="display:none" />
+                        <button type="submit" style="display:none"></button>
+                    </form>
+                }
+            </div>
+            <h1 class="username">@Model.UserName</h1>
+            <div class="user-badge">@(Model.IsSupporter ? "⭐ supporter" : "игрок")</div>
+            <div class="user-details">
+                <div class="detail-item">
+                    <span class="detail-icon">📅</span>
+                    <span class="detail-text">Присоединился: @Model.JoinDate.ToString("dd MMM yyyy")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-icon">🎮</span>
+                    <span class="detail-text">Сыграно: @Model.PlayCount.ToString("N0")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-icon">⏱️</span>
+                    <span class="detail-text">Время в игре: @Model.PlayTime часов</span>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Location))
+                {
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span class="detail-text">@Model.Location</span>
+                    </div>
+                }
+            </div>
+            @if (Model.IsOwnProfile)
+            {
+                <div class="profile-actions">
+                    <a asp-controller="Profile" asp-action="Edit" class="btn-outline">Редактировать профиль</a>
+                </div>
+            }
+        </div>
+
+        <!-- Правая колонка: статистика и достижения -->
+        <div class="profile-main">
+            <!-- Блок статистики (как в osu!) -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">@Model.PP.ToString("F0")</div>
+                    <div class="stat-label">PP</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">@((Model.Accuracy * 100).ToString("F2"))%</div>
+                    <div class="stat-label">Точность</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">@Model.Level</div>
+                    <div class="stat-label">Уровень</div>
+                    <div class="level-progress">
+                        <div class="level-progress-bar" style="width: @Model.LevelProgress%"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">@Model.MaxCombo.ToString("N0")</div>
+                    <div class="stat-label">Макс. комбо</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">@Model.TotalHits.ToString("N0")</div>
+                    <div class="stat-label">Всего нажатий</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">@Model.RankedScore.ToString("N0")</div>
+                    <div class="stat-label">Рейтинговый счёт</div>
+                </div>
+            </div>
+
+            <!-- Последние достижения (медали) -->
+            <div class="section">
+                <h2 class="section-title">Последние достижения</h2>
+                <div class="medals-list">
+                    @foreach (var medal in Model.RecentAchievements.Take(6))
+                    {
+                        <div class="medal-item" title="@medal.Description">
+                            <img src="@medal.IconUrl" alt="@medal.Name" class="medal-icon">
+                            <span class="medal-name">@medal.Name</span>
+                        </div>
+                    }
+                    @if (!Model.RecentAchievements.Any())
+                    {
+                        <div class="empty-placeholder">Нет достижений</div>
+                    }
+                </div>
+            </div>
+
+            <!-- График изменения ранга (простой canvas) -->
+            <div class="section">
+                <h2 class="section-title">Динамика рейтинга</h2>
+                <canvas id="rankChart" width="400" height="150" style="max-width:100%; height:auto; background:#2a2a38; border-radius:12px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <script>
+    const fileInput = document.getElementById('avatarFile');
+    const submitBtn = fileInput?.nextElementSibling;
+    if (fileInput && submitBtn) {
+        fileInput.addEventListener('change', () => submitBtn.click());
+    }
+</script>
+</div>
+
+<style>
+    /* ОСНОВНОЙ СТИЛЬ — ОСУ! */
+    .osu-profile {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #1a1a24;
+        color: #eee;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        border-radius: 0 0 20px 20px;
+        overflow: hidden;
+    }
+
+    /* Обложка */
+    .profile-cover {
+        height: 240px;
+        background-size: cover;
+        background-position: center 30%;
+        position: relative;
+    }
+    .cover-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
+    }
+    .cover-stats {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        gap: 20px;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        padding: 10px 20px;
+        border-radius: 40px;
+        z-index: 2;
+    }
+    .cover-stat {
+        text-align: center;
+    }
+    .cover-stat-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #aaa;
+    }
+    .cover-stat-value {
+        font-weight: 700;
+        font-size: 18px;
+        color: #ff66aa;
+    }
+
+    /* Две колонки */
+    .profile-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        padding: 30px;
+    }
+    .profile-sidebar {
+        flex: 1.2;
+        min-width: 240px;
+        background: #2a2a38;
+        border-radius: 24px;
+        padding: 20px;
+        text-align: center;
+    }
+    .profile-main {
+        flex: 3;
+        min-width: 300px;
+    }
+
+    /* Аватар */
+    .avatar-container {
+        position: relative;
+        width: 128px;
+        height: 128px;
+        margin: 0 auto 20px;
+    }
+    .avatar {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid #ff66aa;
+        box-shadow: 0 0 0 4px #2a2a38;
+    }
+    .avatar-upload-btn {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background: #6c5ce7;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: 0.2s;
+    }
+    .avatar-upload-btn:hover { background: #5a4ad1; }
+
+    .username {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0 0 5px;
+        background: linear-gradient(135deg, #fff, #ff88bb);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .user-badge {
+        display: inline-block;
+        background: #3a3a4a;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+    .user-details {
+        text-align: left;
+        margin: 20px 0;
+    }
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+    .detail-icon { width: 24px; text-align: center; }
+    .profile-actions {
+        margin-top: 20px;
+    }
+    .btn-outline {
+        background: transparent;
+        border: 1px solid #ff66aa;
+        color: #ff66aa;
+        padding: 6px 16px;
+        border-radius: 40px;
+        text-decoration: none;
+        transition: 0.2s;
+        display: inline-block;
+    }
+    .btn-outline:hover {
+        background: #ff66aa;
+        color: #1a1a24;
+    }
+
+    /* Сетка статистики */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: #2a2a38;
+        border-radius: 20px;
+        padding: 16px;
+        text-align: center;
+        transition: transform 0.1s;
+    }
+    .stat-number {
+        font-size: 28px;
+        font-weight: 800;
+        color: #ff88bb;
+    }
+    .stat-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #aaa;
+        margin-top: 4px;
+    }
+    .level-progress {
+        margin-top: 8px;
+        height: 6px;
+        background: #3a3a4a;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .level-progress-bar {
+        height: 100%;
+        background: #ff66aa;
+        width: 0%;
+    }
+
+    /* Секции */
+    .section {
+        background: #2a2a38;
+        border-radius: 24px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0 0 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #ff66aa;
+        display: inline-block;
+    }
+
+    /* Медали */
+    .medals-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .medal-item {
+        background: #3a3a4a;
+        border-radius: 40px;
+        padding: 4px 12px 4px 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+    .medal-icon {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+    }
+    .empty-placeholder {
+        color: #aaa;
+        font-style: italic;
+    }
+
+    /* адаптив */
+    @@media (max-width: 800px) {
+        .profile-content { flex-direction: column; }
+        .cover-stats { bottom: 10px; right: 10px; gap: 8px; padding: 6px 12px; }
+        .cover-stat-value { font-size: 14px; }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // График ранга (данные из модели)
+    const rankHistory = @Html.Raw(Json.Serialize(Model.RankHistory ?? new List<int>()));
+    if (rankHistory && rankHistory.length) {
+        const ctx = document.getElementById('rankChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: rankHistory.map((_, i) => i + 1),
+                datasets: [{
+                    label: 'Глобальный рейтинг',
+                    data: rankHistory,
+                    borderColor: '#ff66aa',
+                    backgroundColor: 'rgba(255,102,170,0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { labels: { color: '#ccc' } } },
+                scales: {
+                    y: { reverse: true, title: { display: true, text: 'Рейтинг', color: '#aaa' }, ticks: { color: '#ccc' } },
+                    x: { title: { display: true, text: 'Последние 90 дней', color: '#aaa' }, ticks: { color: '#ccc' } }
+                }
+            }
+        });
+    } else {
+        document.getElementById('rankChart').style.display = 'none';
+    }
+
+    // автоотправка аватара
+    const fileInput = document.getElementById('avatarFile');
+    const submitBtn = fileInput?.nextElementSibling;
+    if (fileInput && submitBtn) {
+        fileInput.addEventListener('change', () => submitBtn.click());
+    }
+</script>
