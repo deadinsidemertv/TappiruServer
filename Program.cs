@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Identity (оставляем как есть)
+// Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -26,42 +27,61 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// НАСТРОЙКА COOKIE ДЛЯ Identity (не создаём новую схему!)
+// Настройка Cookie (для сайта)
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Registration/Login";
     options.LogoutPath = "/Registration/Logout";
-    options.Cookie.Name = "TappiruAuth";          // имя cookie
+    options.Cookie.Name = "TappiruAuth";
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
     options.SlidingExpiration = true;
 });
 
-// ДОБАВЛЯЕМ JWT как дополнительную схему (не трогаем схему по умолчанию)
-builder.Services.AddAuthentication()
-    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+// === АУТЕНТИФИКАЦИЯ: обе схемы ===
+builder.Services.AddAuthentication(options =>
+{
+    // По умолчанию для API (игра) используем JWT
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+    // Для MVC/сайта будем явно указывать Cookie
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.LoginPath = "/Registration/Login";
+    options.LogoutPath = "/Registration/Logout";
+    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    options.SlidingExpiration = true;
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        ClockSkew = TimeSpan.Zero
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-        // (опционально) для поддержки JWT в query-параметре
-        options.Events = new JwtBearerEvents
+            Console.WriteLine($"[JWT] Authentication Failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
         {
-            OnMessageReceived = context =>
-            {
-                var token = context.Request.Query["access_token"];
-                if (!string.IsNullOrEmpty(token))
-                    context.Token = token;
-                return Task.CompletedTask;
-            }
-        };
-    });
+            Console.WriteLine($"[JWT] Token успешно валидирован для пользователя: {context.Principal?.Identity?.Name}");
+            return Task.CompletedTask;
+        }
+    };
+});
 
 builder.Services.AddControllersWithViews();
 
@@ -77,9 +97,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseStaticFiles();
 
-app.UseAuthentication(); // теперь читает cookie Identity.Application
+app.UseAuthentication();   // ← важно: перед UseAuthorization
 app.UseAuthorization();
-
 
 app.MapStaticAssets();
 app.MapControllerRoute(

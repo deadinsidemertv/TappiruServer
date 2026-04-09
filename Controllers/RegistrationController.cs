@@ -57,7 +57,7 @@ namespace TappiruServer.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginModel model)
+        public async Task<IActionResult> Login(LoginModelCookie model)
         {
             if (ModelState.IsValid)
             {

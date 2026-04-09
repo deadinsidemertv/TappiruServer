@@ -35,8 +35,11 @@ namespace TappiruServer.Controllers
             var model = new ProfileViewModel
             {
                 UserName = targetUser.UserName,
-                AvatarPath = targetUser.AvatarPath,   // предполагаем, что у ApplicationUser есть поле AvatarUrl
-                Rating = targetUser.Rating,         // или вычислите из рейтинговой системы
+                Rating = targetUser.Rating,
+                AvatarPath = targetUser.AvatarPath,
+                RegistrationDate = targetUser.RegistrationDate,  
+                PlayCount = targetUser.PlayCount,
+                AllTimeChar = targetUser.AllTimeChar,
                 IsOwnProfile = (targetUser.Id == currentUser.Id)
             };
             return View(model);

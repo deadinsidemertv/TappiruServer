@@ -2,7 +2,7 @@
 
 namespace TappiruServer.Models
 {
-    public class LoginModel
+    public class LoginModelCookie
     {
         
         [Required(ErrorMessage = "Введите имя пользователя")]

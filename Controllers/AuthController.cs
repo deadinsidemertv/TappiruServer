@@ -24,6 +24,9 @@ namespace TappiruServer.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
+            if (model == null || string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Password))
+                return BadRequest(new { message = "Неверные данные" });
+
             var user = await _userManager.FindByNameAsync(model.UserName);
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
                 return Unauthorized(new { message = "Неверный логин или пароль" });
@@ -37,20 +40,29 @@ namespace TappiruServer.Controllers
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName)
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Email, user.Email ?? "")
             };
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(1),
+                expires: DateTime.UtcNow.AddDays(365),
                 signingCredentials: creds);
+
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+    }
 
-
+    // ==================== МОДЕЛЬ ДЛЯ API (для игры) ====================
+    public class LoginModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
 
     }
 }
