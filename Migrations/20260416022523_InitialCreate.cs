@@ -34,20 +34,23 @@ namespace TappiruServer.Migrations
                     AvatarPath = table.Column<string>(type: "TEXT", nullable: true),
                     RegistrationDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     PlayCount = table.Column<int>(type: "INTEGER", nullable: false),
-                    AllTimeChar = table.Column<int>(type: "INTEGER", nullable: false),
+                    AllTimeChar = table.Column<long>(type: "INTEGER", nullable: false),
+                    MaxCombo = table.Column<int>(type: "INTEGER", nullable: false),
+                    Accuracy = table.Column<float>(type: "REAL", nullable: false),
+                    TotalPlayTime = table.Column<float>(type: "REAL", nullable: false),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedEmail = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     PasswordHash = table.Column<string>(type: "TEXT", nullable: true),
                     SecurityStamp = table.Column<string>(type: "TEXT", nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "TEXT", nullable: true),
                     PhoneNumber = table.Column<string>(type: "TEXT", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     AccessFailedCount = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -168,6 +171,7 @@ namespace TappiruServer.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     UserId = table.Column<string>(type: "TEXT", nullable: false),
+                    MapHash = table.Column<string>(type: "TEXT", nullable: false),
                     MapName = table.Column<string>(type: "TEXT", nullable: false),
                     _Score = table.Column<int>(type: "INTEGER", nullable: false),
                     Accuracy = table.Column<float>(type: "REAL", nullable: false),
@@ -176,7 +180,8 @@ namespace TappiruServer.Migrations
                     FailedPhases = table.Column<int>(type: "INTEGER", nullable: false),
                     CompletedChars = table.Column<int>(type: "INTEGER", nullable: false),
                     FailedChars = table.Column<int>(type: "INTEGER", nullable: false),
-                    PlayedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    PlayedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TP = table.Column<float>(type: "REAL", nullable: false)
                 },
                 constraints: table =>
                 {
