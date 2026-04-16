@@ -74,21 +74,32 @@ else
 static string ConvertPostgresUrlToConnectionString(string? url)
 {
     if (string.IsNullOrWhiteSpace(url))
-        throw new InvalidOperationException("DATABASE_URL environment variable is not set or empty.");
+        throw new InvalidOperationException("DATABASE_URL environment variable is not set.");
+
+    Console.WriteLine($"🔗 Raw DATABASE_URL: {url.Substring(0, Math.Min(80, url.Length))}...");
 
     var databaseUri = new Uri(url);
+
     var userInfo = databaseUri.UserInfo.Split(':', 2);
-
     if (userInfo.Length != 2)
-        throw new InvalidOperationException("Invalid DATABASE_URL format.");
+        throw new InvalidOperationException("Invalid DATABASE_URL: cannot parse username/password.");
 
-    return $"Host={databaseUri.Host};" +
-           $"Port={databaseUri.Port};" +
-           $"Database={databaseUri.LocalPath.TrimStart('/')};" +
-           $"Username={userInfo[0]};" +
-           $"Password={userInfo[1]};" +
-           "SSL Mode=Require;" +
-           "Trust Server Certificate=true;";
+    var host = databaseUri.Host;
+    var port = databaseUri.Port > 0 ? databaseUri.Port : 5432;   // важный фикс!
+    var database = databaseUri.LocalPath.TrimStart('/');
+
+    var connectionString =
+        $"Host={host};" +
+        $"Port={port};" +
+        $"Database={database};" +
+        $"Username={userInfo[0]};" +
+        $"Password={userInfo[1]};" +
+        "SSL Mode=Require;" +
+        "Trust Server Certificate=true;";
+
+    Console.WriteLine($"✅ Built connection string for host: {host}, port: {port}, db: {database}");
+
+    return connectionString;
 }
 
 
