@@ -10,66 +10,39 @@ using TappiruServer.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // ====================== DbContext ======================
-if (builder.Environment.IsProduction())
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-    var connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
+    string? connectionString;
 
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    if (builder.Environment.IsProduction())
     {
-        options.UseNpgsql(connectionString, npgsqlOptions =>
-        {
-            npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public"); // опционально
-        });
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        if (string.IsNullOrWhiteSpace(databaseUrl))
+            throw new InvalidOperationException("DATABASE_URL is missing in Production!");
 
-        // ← Это решает текущую ошибку
-        options.ConfigureWarnings(warnings =>
+        connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
+        options.UseNpgsql(connectionString, npgsql =>
         {
-            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public");
         });
-    });
-}
-else
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    }
+    else
     {
-        if (builder.Environment.IsProduction())
-        {
-            var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        // Для разработки используем SQLite (как было раньше)
+        connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("DefaultConnection string is missing in appsettings.json");
 
-            if (string.IsNullOrWhiteSpace(databaseUrl))
-                throw new InvalidOperationException("DATABASE_URL is missing!");
+        options.UseSqlite(connectionString);
+    }
 
-            Console.WriteLine($"🔗 DATABASE_URL found: {databaseUrl.Substring(0, Math.Min(60, databaseUrl.Length))}...");
-
-            var connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
-            Console.WriteLine($"🔗 Connection string built successfully.");
-
-            options.UseNpgsql(connectionString, npgsql =>
-            {
-                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public");
-            });
-        }
-        else
-        {
-            // Development / Local
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-            if (string.IsNullOrWhiteSpace(connectionString))
-                throw new InvalidOperationException("DefaultConnection string is missing in appsettings.json");
-
-            options.UseSqlite(connectionString);
-        }
-
-        // Общие настройки
-        options.ConfigureWarnings(warnings =>
-        {
-            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
-        });
-
-        options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+    // Общие настройки
+    options.ConfigureWarnings(warnings =>
+    {
+        warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
     });
-}
+    options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+});
 
 static string ConvertPostgresUrlToConnectionString(string? url)
 {
