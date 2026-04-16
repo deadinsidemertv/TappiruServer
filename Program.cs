@@ -17,7 +17,10 @@ if (builder.Environment.IsProduction())
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        options.UseNpgsql(connectionString);
+        options.UseNpgsql(connectionString, npgsqlOptions =>
+        {
+            npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public"); // опционально
+        });
 
         // ← Это решает текущую ошибку
         options.ConfigureWarnings(warnings =>
@@ -30,13 +33,35 @@ else
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+        string connectionString;
 
-        // Можно добавить и сюда для разработки, если нужно
+        if (builder.Environment.IsProduction())
+        {
+            var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+            if (string.IsNullOrEmpty(databaseUrl))
+                throw new InvalidOperationException("DATABASE_URL is not set in Production");
+
+            connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
+
+            options.UseNpgsql(connectionString, npgsql =>
+            {
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+            });
+        }
+        else
+        {
+            // Development + локальный запуск
+            connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            options.UseSqlite(connectionString);
+        }
+
+        // Общие настройки для обоих провайдеров
         options.ConfigureWarnings(warnings =>
         {
             warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
         });
+
+        options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment()); // только в dev
     });
 }
 
@@ -119,11 +144,11 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    if (builder.Environment.IsProduction())
-    {
-        // Автоматически создаёт базу данных и применяет миграции
-        dbContext.Database.Migrate();
-    }
+
+    dbContext.Database.SetCommandTimeout(180);
+
+    // Применяем только те миграции, которые ещё не применены
+    dbContext.Database.Migrate();
 }
 // ====================== Middleware ======================
 if (!app.Environment.IsDevelopment())
