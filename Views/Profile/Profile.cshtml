@@ -5,379 +5,550 @@
 }
 
 <div class="osu-profile">
-    <!-- Обложка профиля -->
+    <!-- Обложка -->
     <div class="profile-cover" style="background-image: url('@(Model.CoverUrl ?? "/images/default-cover.jpg")');">
         <div class="cover-overlay"></div>
-        <div class="cover-stats">
-            <div class="cover-stat">
-                <div class="cover-stat-label">Глобальный рейтинг</div>
-                <div class="cover-stat-value">#@Model.GlobalRank.ToString("N0")</div>
-            </div>
-            <div class="cover-stat">
-                <div class="cover-stat-label">Страна</div>
-                <div class="cover-stat-value">@Model.CountryCode · #@Model.CountryRank</div>
-            </div>
-            <div class="cover-stat">
-                <div class="cover-stat-label">PP</div>
-                <div class="cover-stat-value">@Model.PP.ToString("F2")</div>
+        <div class="cover-content">
+            <div class="cover-stats">
+                <div class="cover-stat">
+                    <span class="cover-stat-label">Глобальный рейтинг</span>
+                    <span class="cover-stat-value">#@Model.GlobalRank.ToString("N0")</span>
+                </div>
+                <div class="cover-stat">
+                    <span class="cover-stat-label">Страна</span>
+                    <span class="cover-stat-value">@Model.CountryCode · #@Model.CountryRank.ToString("N0")</span>
+                </div>
+                <div class="cover-stat">
+                    <span class="cover-stat-label">TP</span>
+                    <span class="cover-stat-value">@Model.Rating.ToString("F2")</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="profile-content">
-        <!-- Левая колонка: аватар и информация -->
+    <div class="profile-container">
+        <!-- Sidebar -->
         <div class="profile-sidebar">
             <div class="avatar-container">
-                <img class="avatar" src="@(string.IsNullOrEmpty(Model.AvatarPath) ? "/images/default-avatar.png" : Model.AvatarPath)" alt="avatar">
+                <img class="avatar" 
+                     src="@(string.IsNullOrEmpty(Model.AvatarPath) ? "/images/default-avatar.png" : Model.AvatarPath)" 
+                     alt="@Model.UserName">
                 @if (Model.IsOwnProfile)
-                {   
-                    <form asp-controller="Profile" asp-action="UploadAvatar" method="post" enctype="multipart/form-data" class="avatar-upload-form">
+                {
+                    <form asp-controller="Profile" asp-action="UploadAvatar" method="post" 
+                          enctype="multipart/form-data" class="avatar-upload-form">
                         <label for="avatarFile" class="avatar-upload-btn">📷</label>
-                        <input type="file" id="avatarFile" name="avatarFile" accept="image/jpeg,image/png,image/gif" style="display:none" />
-                        <button type="submit" style="display:none"></button>
+                        <input type="file" id="avatarFile" name="avatarFile" 
+                               accept="image/jpeg,image/png,image/gif" style="display:none" />
                     </form>
                 }
             </div>
             <h1 class="username">@Model.UserName</h1>
-            <div class="user-badge">@(Model.IsSupporter ? "⭐ supporter" : "игрок")</div>
+            <div class="user-badge @(Model.IsSupporter ? "supporter" : "")">
+                @(Model.IsSupporter ? "⭐ SUPPORTER" : "ИГРОК")
+            </div>
             <div class="user-details">
                 <div class="detail-item">
                     <span class="detail-icon">📅</span>
-                    <span class="detail-text">Присоединился: @Model.RegistrationDate.ToString()</span>
+                    <span>Присоединился: @Model.JoinDate?.ToString("dd.MM.yyyy")</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-icon">🎮</span>
-                    <span class="detail-text">Сыграно: @Model.PlayCount.ToString("N0")</span>
+                    <span>Сыграно: @Model.PlayCount.ToString("N0")</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-icon">⏱️</span>
-                    <span class="detail-text">Время в игре: @Model.PlayTime часов</span>
+                    <span>В игре: @Model.TotalPlayTime.ToString("F1") ч</span>
                 </div>
-                @if (!string.IsNullOrEmpty(Model.Location))
-                {
-                    <div class="detail-item">
-                        <span class="detail-icon">📍</span>
-                        <span class="detail-text">@Model.Location</span>
-                    </div>
-                }
             </div>
             @if (Model.IsOwnProfile)
             {
-                <div class="profile-actions">
-                    <a asp-controller="Profile" asp-action="Edit" class="btn-outline">Редактировать профиль</a>
-                </div>
+                <a asp-controller="Profile" asp-action="Edit" class="btn-primary">Редактировать профиль</a>
             }
         </div>
 
-        <!-- Правая колонка: статистика и достижения -->
+        <!-- Main content -->
         <div class="profile-main">
-            <!-- Блок статистики (как в osu!) -->
+            <!-- Статистика — компактные карточки, правильно отформатированные -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-number">@Model.PP.ToString("F0")</div>
-                    <div class="stat-label">PP</div>
+                    <div class="stat-number">@Model.Rating.ToString("F0")</div>
+                    <div class="stat-label">TP</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number">@((Model.Accuracy * 100).ToString("F2"))%</div>
                     <div class="stat-label">Точность</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">@Model.Level</div>
-                    <div class="stat-label">Уровень</div>
-                    <div class="level-progress">
-                        <div class="level-progress-bar" style="width: @Model.LevelProgress%"></div>
-                    </div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-number">@Model.MaxCombo.ToString("N0")</div>
                     <div class="stat-label">Макс. комбо</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">@Model.TotalHits.ToString("N0")</div>
+                    <div class="stat-number">@Model.AllTimeChar.ToString("N0")</div>
                     <div class="stat-label">Всего нажатий</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">@Model.RankedScore.ToString("N0")</div>
-                    <div class="stat-label">Рейтинговый счёт</div>
-                </div>
             </div>
 
-            <!-- Последние достижения (медали) -->
+            <!-- Топ скоров с рангами -->
             <div class="section">
-                <h2 class="section-title">Последние достижения</h2>
-                <div class="medals-list">
-                    @foreach (var medal in Model.RecentAchievements.Take(6))
-                    {
-                        <div class="medal-item" title="@medal.Description">
-                            <img src="@medal.IconUrl" alt="@medal.Name" class="medal-icon">
-                            <span class="medal-name">@medal.Name</span>
+                <h2 class="section-title">Лучшие результаты <span class="subtitle">(по TP)</span></h2>
+                @if (Model.TopScores != null && Model.TopScores.Any())
+                {
+                    <div class="top-scores-wrapper">
+                        <div class="top-scores-list" id="topScoresList">
+                            @foreach (var score in Model.TopScores.Take(10))
+                            {
+                                <div class="score-row" data-accuracy="@score.Accuracy">
+                                    <div class="score-rank"></div>
+                                    <div class="score-map">
+                                        <strong>@score.MapName</strong>
+                                    </div>
+                                    <div class="score-tp">@score.TP.ToString("F2") <span class="tp-label">TP</span></div>
+                                    <div class="score-acc">@((score.Accuracy * 100).ToString("F2"))%</div>
+                                    <div class="score-combo">@score.MaxCombo.ToString("N0")x</div>
+                                    <div class="score-date">@score.PlayedAt.ToString("dd.MM.yyyy")</div>
+                                </div>
+                            }
                         </div>
-                    }
-                    @if (!Model.RecentAchievements.Any())
+                    </div>
+                    @if (Model.TopScores.Count > 10)
                     {
-                        <div class="empty-placeholder">Нет достижений</div>
+                        <button id="showAllScoresBtn" class="btn-show-more">
+                            Показать все @Model.TopScores.Count результатов
+                        </button>
                     }
-                </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <p>Пока нет сыгранных карт.</p>
+                    </div>
+                }
             </div>
 
-            <!-- График изменения ранга (простой canvas) -->
+            <!-- График рейтинга -->
             <div class="section">
                 <h2 class="section-title">Динамика рейтинга</h2>
-                <canvas id="rankChart" width="400" height="150" style="max-width:100%; height:auto; background:#2a2a38; border-radius:12px;"></canvas>
+                <div class="chart-container">
+                    <canvas id="rankChart" width="800" height="300"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    <script>
-    const fileInput = document.getElementById('avatarFile');
-    const submitBtn = fileInput?.nextElementSibling;
-    if (fileInput && submitBtn) {
-        fileInput.addEventListener('change', () => submitBtn.click());
-    }
-</script>
 </div>
 
 <style>
-    /* ОСНОВНОЙ СТИЛЬ — ОСУ! */
+    :root {
+        --accent: #ff44aa;
+        --accent-dark: #cc3388;
+        --bg: #0f0f17;
+        --card: #1a1a28;
+        --card-hover: #222235;
+        --text: #f0f0ff;
+        --text-muted: #aaaac0;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
     .osu-profile {
-        max-width: 1200px;
-        margin: 0 auto;
-        background: #1a1a24;
-        color: #eee;
-        font-family: 'Inter', 'Segoe UI', sans-serif;
-        border-radius: 0 0 20px 20px;
-        overflow: hidden;
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
     }
 
     /* Обложка */
     .profile-cover {
-        height: 240px;
+        height: 280px;
         background-size: cover;
         background-position: center 30%;
         position: relative;
+        transition: transform 0.2s ease-out;
     }
+
     .cover-overlay {
         position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(15,15,23,0.4) 0%, rgba(15,15,23,0.9) 80%);
     }
-    .cover-stats {
+
+    .cover-content {
         position: absolute;
-        bottom: 20px;
-        right: 20px;
+        bottom: 30px;
+        left: 40px;
+        right: 40px;
+        animation: slideUp 0.5s ease-out;
+    }
+
+    .cover-stats {
         display: flex;
-        gap: 20px;
-        background: rgba(0,0,0,0.6);
+        gap: 40px;
+        flex-wrap: wrap;
+    }
+
+    .cover-stat {
+        text-align: left;
         backdrop-filter: blur(4px);
-        padding: 10px 20px;
-        border-radius: 40px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        background: rgba(0,0,0,0.3);
+    }
+
+    .cover-stat-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #ccc;
+    }
+
+    .cover-stat-value {
+        font-size: 22px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff, var(--accent));
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+
+    /* Контейнер */
+    .profile-container {
+        max-width: 1280px;
+        margin: -70px auto 0;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 28px;
+        position: relative;
         z-index: 2;
     }
-    .cover-stat {
-        text-align: center;
-    }
-    .cover-stat-label {
-        font-size: 12px;
-        text-transform: uppercase;
-        color: #aaa;
-    }
-    .cover-stat-value {
-        font-weight: 700;
-        font-size: 18px;
-        color: #ff66aa;
-    }
 
-    /* Две колонки */
-    .profile-content {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 30px;
-        padding: 30px;
-    }
+    /* Sidebar */
     .profile-sidebar {
-        flex: 1.2;
-        min-width: 240px;
-        background: #2a2a38;
-        border-radius: 24px;
-        padding: 20px;
         text-align: center;
     }
-    .profile-main {
-        flex: 3;
-        min-width: 300px;
-    }
 
-    /* Аватар */
     .avatar-container {
         position: relative;
-        width: 128px;
-        height: 128px;
-        margin: 0 auto 20px;
+        width: 140px;
+        height: 140px;
+        margin: 0 auto 16px;
     }
+
     .avatar {
         width: 100%;
         height: 100%;
-        object-fit: cover;
         border-radius: 50%;
-        border: 3px solid #ff66aa;
-        box-shadow: 0 0 0 4px #2a2a38;
+        border: 3px solid var(--accent);
+        box-shadow: 0 0 16px rgba(255,68,170,0.4);
+        object-fit: cover;
+        transition: all 0.2s;
     }
+
     .avatar-upload-btn {
         position: absolute;
-        bottom: 5px;
-        right: 5px;
-        background: #6c5ce7;
-        border-radius: 50%;
+        bottom: 4px;
+        right: 4px;
+        background: var(--accent);
         width: 32px;
         height: 32px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 16px;
         cursor: pointer;
-        font-size: 1rem;
-        transition: 0.2s;
+        border: 2px solid var(--bg);
     }
-    .avatar-upload-btn:hover { background: #5a4ad1; }
 
     .username {
-        font-size: 1.8rem;
-        font-weight: 700;
-        margin: 0 0 5px;
-        background: linear-gradient(135deg, #fff, #ff88bb);
-        -webkit-background-clip: text;
+        font-size: 24px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff, var(--accent));
         background-clip: text;
+        -webkit-background-clip: text;
         color: transparent;
     }
+
     .user-badge {
         display: inline-block;
-        background: #3a3a4a;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
+        padding: 4px 14px;
+        background: #2a2a3a;
+        border-radius: 40px;
+        font-size: 11px;
+        font-weight: 600;
         margin-bottom: 20px;
     }
-    .user-details {
-        text-align: left;
-        margin: 20px 0;
+
+    .user-badge.supporter {
+        background: linear-gradient(90deg, #ff88bb, #cc66ff);
+        color: #0f0f17;
     }
+
+    .user-details {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 16px;
+        text-align: left;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255,68,170,0.2);
+    }
+
     .detail-item {
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 12px;
-        font-size: 14px;
-    }
-    .detail-icon { width: 24px; text-align: center; }
-    .profile-actions {
-        margin-top: 20px;
-    }
-    .btn-outline {
-        background: transparent;
-        border: 1px solid #ff66aa;
-        color: #ff66aa;
-        padding: 6px 16px;
-        border-radius: 40px;
-        text-decoration: none;
-        transition: 0.2s;
-        display: inline-block;
-    }
-    .btn-outline:hover {
-        background: #ff66aa;
-        color: #1a1a24;
-    }
-
-    /* Сетка статистики */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 16px;
-        margin-bottom: 30px;
-    }
-    .stat-card {
-        background: #2a2a38;
-        border-radius: 20px;
-        padding: 16px;
-        text-align: center;
-        transition: transform 0.1s;
-    }
-    .stat-number {
-        font-size: 28px;
-        font-weight: 800;
-        color: #ff88bb;
-    }
-    .stat-label {
-        font-size: 12px;
-        text-transform: uppercase;
-        color: #aaa;
-        margin-top: 4px;
-    }
-    .level-progress {
-        margin-top: 8px;
-        height: 6px;
-        background: #3a3a4a;
-        border-radius: 3px;
-        overflow: hidden;
-    }
-    .level-progress-bar {
-        height: 100%;
-        background: #ff66aa;
-        width: 0%;
-    }
-
-    /* Секции */
-    .section {
-        background: #2a2a38;
-        border-radius: 24px;
-        padding: 20px;
-        margin-bottom: 30px;
-    }
-    .section-title {
-        font-size: 1.3rem;
-        font-weight: 600;
-        margin: 0 0 16px;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #ff66aa;
-        display: inline-block;
-    }
-
-    /* Медали */
-    .medals-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .medal-item {
-        background: #3a3a4a;
-        border-radius: 40px;
-        padding: 4px 12px 4px 6px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid #2a2a3a;
         font-size: 13px;
     }
-    .medal-icon {
-        width: 28px;
-        height: 28px;
-        object-fit: contain;
-    }
-    .empty-placeholder {
-        color: #aaa;
-        font-style: italic;
+
+    .detail-item:last-child {
+        border-bottom: none;
     }
 
-    /* адаптив */
-    @@media (max-width: 800px) {
-        .profile-content { flex-direction: column; }
-        .cover-stats { bottom: 10px; right: 10px; gap: 8px; padding: 6px 12px; }
-        .cover-stat-value { font-size: 14px; }
+    .btn-primary {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+        border-radius: 40px;
+        text-align: center;
+        font-weight: 700;
+        text-decoration: none;
+        color: white;
+        transition: 0.2s;
+    }
+
+    /* Основной контент */
+    .profile-main {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+    }
+
+    /* Компактные карточки статистики */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+    }
+
+    .stat-card {
+        background: var(--card);
+        border-radius: 18px;
+        padding: 14px 8px;
+        text-align: center;
+        transition: 0.2s;
+        border: 1px solid rgba(255,68,170,0.1);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--accent);
+        background: var(--card-hover);
+    }
+
+    .stat-number {
+        font-size: 26px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff, var(--accent));
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 4px;
+    }
+
+    /* Таблица скоров */
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+        font-weight: normal;
+        color: var(--text-muted);
+    }
+
+    .top-scores-wrapper {
+        background: var(--card);
+        border-radius: 20px;
+        overflow-x: auto;
+        border: 1px solid rgba(255,68,170,0.1);
+    }
+
+    .top-scores-list {
+        min-width: 680px;
+    }
+
+    .score-row {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        gap: 12px;
+        border-bottom: 1px solid #2a2a3a;
+        font-size: 13px;
+        transition: 0.1s;
+    }
+
+    .score-row:hover {
+        background: var(--card-hover);
+    }
+
+    .score-rank {
+        width: 40px;
+        font-size: 20px;
+        font-weight: 800;
+        text-align: center;
+    }
+    /* Ранги через data-accuracy */
+    .score-rank::before { content: "S"; }
+    .score-row[data-accuracy="1"] .score-rank::before { content: "SS"; }
+    .score-row[data-accuracy^="0.98"]:not([data-accuracy="1"]) .score-rank::before { content: "SS"; }
+    .score-row[data-accuracy^="0.95"]:not([data-accuracy^="0.98"]) .score-rank::before { content: "S"; }
+    .score-row[data-accuracy^="0.9"]:not([data-accuracy^="0.95"]) .score-rank::before { content: "A"; }
+    .score-row[data-accuracy^="0.8"]:not([data-accuracy^="0.9"]) .score-rank::before { content: "B"; }
+    .score-row[data-accuracy^="0.7"]:not([data-accuracy^="0.8"]) .score-rank::before { content: "C"; }
+    .score-row[data-accuracy<"0.7"] .score-rank::before { content: "D"; }
+
+    .score-map {
+        flex: 2;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
+    }
+    .score-tp {
+        width: 90px;
+        text-align: right;
+        font-weight: 700;
+        color: var(--accent);
+    }
+    .tp-label {
+        font-size: 10px;
+        color: #888;
+    }
+    .score-acc {
+        width: 80px;
+        text-align: right;
+        color: #77ffbb;
+        font-weight: 500;
+    }
+    .score-combo {
+        width: 80px;
+        text-align: right;
+        color: #88ccff;
+    }
+    .score-date {
+        width: 100px;
+        text-align: right;
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+
+    .btn-show-more {
+        margin-top: 16px;
+        width: 100%;
+        padding: 12px;
+        background: #2a2a3a;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 40px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-show-more:hover {
+        background: var(--accent);
+        color: #0f0f17;
+    }
+
+    .empty-state {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    .chart-container {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 16px;
+    }
+
+    /* Адаптив */
+    @@media (max-width: 900px) {
+        .profile-container {
+            grid-template-columns: 1fr;
+            margin-top: -50px;
+        }
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .cover-stats {
+            gap: 20px;
+        }
+        .cover-stat-value {
+            font-size: 18px;
+        }
+        .score-row {
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .score-map { flex-basis: 100%; order: 1; white-space: normal; }
+        .score-tp, .score-acc, .score-combo, .score-date {
+            width: auto;
+            flex: 1;
+            text-align: center;
+        }
+    }
+
+    @@media (max-width: 550px) {
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .stat-number {
+            font-size: 22px;
+        }
+        .cover-content {
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+        }
+        .cover-stat-value {
+            font-size: 16px;
+        }
+    }
+
+    @@keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    // График ранга (данные из модели)
+    // График рейтинга
     const rankHistory = @Html.Raw(Json.Serialize(Model.RankHistory ?? new List<int>()));
-    if (rankHistory && rankHistory.length) {
-        const ctx = document.getElementById('rankChart').getContext('2d');
+    const ctx = document.getElementById('rankChart').getContext('2d');
+    if (rankHistory && rankHistory.length > 0) {
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -385,31 +556,55 @@
                 datasets: [{
                     label: 'Глобальный рейтинг',
                     data: rankHistory,
-                    borderColor: '#ff66aa',
-                    backgroundColor: 'rgba(255,102,170,0.1)',
-                    tension: 0.3,
+                    borderColor: '#ff44aa',
+                    backgroundColor: 'rgba(255,68,170,0.05)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#ff66cc',
                     fill: true,
-                    pointRadius: 2
+                    tension: 0.3
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
-                plugins: { legend: { labels: { color: '#ccc' } } },
+                plugins: {
+                    legend: { labels: { color: '#e0e0ff' } }
+                },
                 scales: {
-                    y: { reverse: true, title: { display: true, text: 'Рейтинг', color: '#aaa' }, ticks: { color: '#ccc' } },
-                    x: { title: { display: true, text: 'Последние 90 дней', color: '#aaa' }, ticks: { color: '#ccc' } }
+                    y: { reverse: true, grid: { color: '#2a2a3a' }, ticks: { color: '#e0e0ff' } },
+                    x: { grid: { color: '#2a2a3a' }, ticks: { color: '#e0e0ff' } }
                 }
             }
         });
     } else {
-        document.getElementById('rankChart').style.display = 'none';
+        ctx.fillStyle = '#aaaac0';
+        ctx.font = '14px Inter';
+        ctx.fillText('Нет данных для графика', 50, 150);
     }
 
-    // автоотправка аватара
-    const fileInput = document.getElementById('avatarFile');
-    const submitBtn = fileInput?.nextElementSibling;
-    if (fileInput && submitBtn) {
-        fileInput.addEventListener('change', () => submitBtn.click());
+    // Показать все скоры
+    const showAllBtn = document.getElementById('showAllScoresBtn');
+    if (showAllBtn) {
+        showAllBtn.addEventListener('click', function() {
+            const container = document.getElementById('topScoresList');
+            container.innerHTML = `@foreach (var score in Model.TopScores) {
+                <div class="score-row" data-accuracy="@score.Accuracy">
+                    <div class="score-rank"></div>
+                    <div class="score-map"><strong>@score.MapName</strong></div>
+                    <div class="score-tp">@score.TP.ToString("F2") <span class="tp-label">TP</span></div>
+                    <div class="score-acc">@((score.Accuracy * 100)).ToString("F2")%</div>
+                    <div class="score-combo">@score.MaxCombo.ToString("N0")x</div>
+                    <div class="score-date">@score.PlayedAt.ToString("dd.MM.yyyy")</div>
+                </div>
+            }`;
+            this.style.display = 'none';
+        });
     }
+
+    // Параллакс
+    window.addEventListener('scroll', function() {
+        const cover = document.querySelector('.profile-cover');
+        if (cover) cover.style.transform = `translateY(${window.scrollY * 0.2}px)`;
+    });
 </script>

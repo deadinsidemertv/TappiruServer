@@ -9,11 +9,11 @@ using TappiruServer.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext
+// ====================== DbContext ======================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Identity
+// ====================== Identity ======================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -27,7 +27,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// Настройка Cookie (для сайта)
+// ====================== Cookie Authentication (для сайта) ======================
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Registration/Login";
@@ -36,24 +36,18 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
     options.SlidingExpiration = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;        // важно для работы с играми/клиентами
 });
 
-// === АУТЕНТИФИКАЦИЯ: обе схемы ===
+// ====================== Authentication Schemes ======================
 builder.Services.AddAuthentication(options =>
 {
-    // По умолчанию для API (игра) используем JWT
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-
-    // Для MVC/сайта будем явно указывать Cookie
+    // По умолчанию для MVC/сайта — используем Cookie от Identity
+    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
 })
-.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-{
-    options.LoginPath = "/Registration/Login";
-    options.LogoutPath = "/Registration/Logout";
-    options.ExpireTimeSpan = TimeSpan.FromDays(14);
-    options.SlidingExpiration = true;
-})
+// JWT только для API (игра)
 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -75,9 +69,9 @@ builder.Services.AddAuthentication(options =>
             Console.WriteLine($"[JWT] Authentication Failed: {context.Exception.Message}");
             return Task.CompletedTask;
         },
-        OnTokenValidated = context =>
+        OnChallenge = context =>
         {
-            Console.WriteLine($"[JWT] Token успешно валидирован для пользователя: {context.Principal?.Identity?.Name}");
+            Console.WriteLine($"[JWT] Challenge triggered: {context.Error}");
             return Task.CompletedTask;
         }
     };
@@ -87,6 +81,7 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// ====================== Middleware ======================
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -97,7 +92,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseStaticFiles();
 
-app.UseAuthentication();   // ← важно: перед UseAuthorization
+app.UseAuthentication();   // ← обязательно перед UseAuthorization
 app.UseAuthorization();
 
 app.MapStaticAssets();

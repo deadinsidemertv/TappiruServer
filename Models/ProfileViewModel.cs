@@ -5,54 +5,41 @@ namespace TappiruServer.Models
 {
     public class ProfileViewModel
     {
-        // ===== ОСНОВНЫЕ ПОЛЯ (уже были) =====
-        public string UserName { get; set; }
-        public int Rating { get; set; }               // можно использовать как PP или как рейтинг
+        public string UserName { get; set; } = string.Empty;
+        public int Rating { get; set; }
         public string? AvatarPath { get; set; }
-        public DateTime? RegistrationDate { get; set; }
+
+        public int GlobalRank { get; set; } = 0;
+        public int CountryRank { get; set; } = 0;
+        public string CountryCode { get; set; } = "XX";
+
         public int PlayCount { get; set; }
-        public int AllTimeChar { get; set; }          // суммарное количество нажатий (хитов)
+        public long AllTimeChar { get; set; }
+        public float Accuracy { get; set; }
+        public int MaxCombo { get; set; }
+        public int Level { get; set; } = 1;
+        public float TotalPlayTime { get; set; }
+
+        public DateTime? JoinDate { get; set; }
+
         public bool IsOwnProfile { get; set; }
-
-        // ===== НОВЫЕ ПОЛЯ ДЛЯ OSU! СТИЛЯ =====
-
-        // Обложка профиля
+        public bool IsSupporter { get; set; }
         public string? CoverUrl { get; set; }
 
-        // Ранги
-        public int GlobalRank { get; set; }            // мировой рейтинг (число)
-        public int CountryRank { get; set; }           // рейтинг в стране
-        public string CountryCode { get; set; }        // код страны (RU, US и т.д.)
-
-        // Статистика
-        public double PP { get; set; }                 // Performance Points
-        public double Accuracy { get; set; }           // точность (доля, например 0.92841)
-        public int Level { get; set; }                 // уровень игрока
-        public double LevelProgress { get; set; }      // прогресс до следующего уровня (0–100)
-
-        public int MaxCombo { get; set; }              // максимальное комбо
-        public long TotalHits { get; set; }            // общее количество попаданий (300/100/50/miss)
-        public long RankedScore { get; set; }          // рейтинговый счёт
-
-        public int PlayTime { get; set; }              // время в игре (часы)
-
-        // Личная информация
-        public DateTime JoinDate { get; set; }          // дата регистрации (можно дублировать RegistrationDate)
-        public string? Location { get; set; }           // местоположение (город/страна)
-        public bool IsSupporter { get; set; }           // есть ли саппортер (донат)
-
-        // Достижения (медали)
-        public List<MedalDto> RecentAchievements { get; set; } = new();
-
-        // История изменения ранга (последние 90 дней)
+        // Для графика (пока можно оставить пустым)
         public List<int> RankHistory { get; set; } = new();
-    }
 
-    // DTO для медалей/достижений
-    public class MedalDto
-    {
-        public string Name { get; set; }
-        public string IconUrl { get; set; }
-        public string Description { get; set; }
+        public List<TopScoreViewModel> TopScores { get; set; } = new List<TopScoreViewModel>();
+
+        public class TopScoreViewModel
+        {
+            public string MapName { get; set; } = string.Empty;
+            public string MapHash { get; set; } = string.Empty;
+            public int Score { get; set; }
+            public float Accuracy { get; set; }
+            public int MaxCombo { get; set; }
+            public float TP { get; set; }
+            public DateTime PlayedAt { get; set; }
+        }
     }
 }

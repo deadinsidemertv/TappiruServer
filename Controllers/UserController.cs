@@ -4,13 +4,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TappiruServer.Models;
+using TappiruServer.Models.DTO;           // ← поменяй, если у тебя DTOs
 
 namespace TappiruServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]  // ← КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
-    public class UserController : ControllerBase   // Лучше наследовать от ControllerBase для API
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public class UserController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
@@ -24,22 +25,21 @@ namespace TappiruServer.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized(new { message = "Не удалось определить пользователя" });
+                return Unauthorized(new { message = "Неверный токен" });
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return NotFound(new { message = "Пользователь не найден" });
 
-            return Ok(new
+            var dto = new UserProfileDTO
             {
-                userName = user.UserName,
-                email = user.Email,
-                rating = user.Rating,
-                avatarPath = user.AvatarPath ?? "",        // ← возвращаем AvatarPath
-                playCount = user.PlayCount,
-                allTimeChar = user.AllTimeChar,
-                registrationDate = user.RegistrationDate
-            });
+                UserName = user.UserName ?? "",
+                Rating = user.Rating,
+                AvatarPath = user.AvatarPath,
+                GlobalRank = 0                     // Пока заглушка, позже сделаем реальный расчёт
+            };
+
+            return Ok(dto);
         }
     }
 }

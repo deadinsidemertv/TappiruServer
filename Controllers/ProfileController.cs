@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TappiruServer.Data;
 using TappiruServer.Models;
 
@@ -32,16 +33,39 @@ namespace TappiruServer.Controllers
                 if (targetUser == null) return NotFound();
             }
 
+            // Загружаем топ-100 лучших скоров по TP
+            var topScores = await _context.Scores
+                .Where(s => s.UserId == targetUser.Id)
+                .OrderByDescending(s => s.TP)
+                .Take(100)
+                .Select(s => new ProfileViewModel.TopScoreViewModel
+                {
+                    MapName = s.MapName ?? string.Empty,
+                    MapHash = s.MapHash ?? string.Empty,
+                    Score = s._Score,
+                    Accuracy = s.Accuracy,
+                    MaxCombo = s.MaxCombo,
+                    TP = s.TP,
+                    PlayedAt = s.PlayedAt
+                })
+                .ToListAsync<ProfileViewModel.TopScoreViewModel>();   // ← Явно указываем тип
+
             var model = new ProfileViewModel
             {
                 UserName = targetUser.UserName,
                 Rating = targetUser.Rating,
                 AvatarPath = targetUser.AvatarPath,
-                RegistrationDate = targetUser.RegistrationDate,  
+                JoinDate = targetUser.RegistrationDate,
                 PlayCount = targetUser.PlayCount,
                 AllTimeChar = targetUser.AllTimeChar,
-                IsOwnProfile = (targetUser.Id == currentUser.Id)
+                Accuracy = targetUser.Accuracy,
+                MaxCombo = targetUser.MaxCombo,
+                TotalPlayTime = targetUser.TotalPlayTime,
+                IsOwnProfile = (targetUser.Id == currentUser?.Id),
+
+                TopScores = topScores
             };
+
             return View(model);
         }
 
@@ -107,5 +131,7 @@ namespace TappiruServer.Controllers
             TempData["Success"] = "Аватар успешно обновлён!";
             return RedirectToAction("Profile");
         }
+
+        
     }
 }
