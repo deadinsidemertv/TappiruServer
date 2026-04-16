@@ -34,7 +34,7 @@ namespace TappiruServer.Controllers
                 {
                     UserName = model.UserName,
                     Email = model.Email,
-                    RegistrationDate = DateTime.Now
+                    RegistrationDate = DateTime.UtcNow
                 };
                 // Пытаемся сохранить в базу
                 var result = await _userManager.CreateAsync(user, model.Password);
