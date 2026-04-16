@@ -71,7 +71,7 @@ namespace TappiruServer.Controllers
                 FailedPhases = dto.FailedPhases,
                 CompletedChars = dto.CompletedChars,
                 FailedChars = dto.FailedChars,
-                PlayedAt = dto.PlayedAt ?? DateTime.UtcNow
+                PlayedAt = dto.PlayedAt?.ToUniversalTime() ?? DateTime.UtcNow
             };
 
             _context.Scores.Add(score);
