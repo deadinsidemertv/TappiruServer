@@ -33,15 +33,14 @@ else
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        string connectionString;
-
         if (builder.Environment.IsProduction())
         {
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-            if (string.IsNullOrEmpty(databaseUrl))
-                throw new InvalidOperationException("DATABASE_URL is not set in Production");
 
-            connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
+            if (string.IsNullOrWhiteSpace(databaseUrl))
+                throw new InvalidOperationException("DATABASE_URL environment variable is missing in Production.");
+
+            var connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
 
             options.UseNpgsql(connectionString, npgsql =>
             {
@@ -50,18 +49,22 @@ else
         }
         else
         {
-            // Development + локальный запуск
-            connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            // Development / Local
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new InvalidOperationException("DefaultConnection string is missing in appsettings.json");
+
             options.UseSqlite(connectionString);
         }
 
-        // Общие настройки для обоих провайдеров
+        // Общие настройки
         options.ConfigureWarnings(warnings =>
         {
             warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
         });
 
-        options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment()); // только в dev
+        options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
     });
 }
 
@@ -149,25 +152,25 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        Console.WriteLine("🔄 Checking pending migrations...");
+        Console.WriteLine("🔄 Checking for pending migrations...");
 
-        var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+        var pending = dbContext.Database.GetPendingMigrations().ToList();
 
-        if (pendingMigrations.Any())
+        if (pending.Any())
         {
-            Console.WriteLine($"📌 Found {pendingMigrations.Count} pending migrations. Applying...");
+            Console.WriteLine($"📌 Applying {pending.Count} pending migration(s): {string.Join(", ", pending)}");
             dbContext.Database.Migrate();
-            Console.WriteLine("✅ All migrations applied successfully!");
+            Console.WriteLine("✅ Migrations applied successfully!");
         }
         else
         {
-            Console.WriteLine("✅ No pending migrations.");
+            Console.WriteLine("✅ Database is up to date. No migrations to apply.");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"⚠️ Migration error: {ex.Message}");
-        // НЕ бросаем исключение — приложение должно запуститься даже если миграция упала
+        Console.WriteLine($"⚠️ Migration error (ignored for startup): {ex.Message}");
+        // Приложение продолжит работу даже при ошибке миграции
     }
 }
 // ====================== Middleware ======================
