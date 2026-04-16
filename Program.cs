@@ -12,19 +12,32 @@ var builder = WebApplication.CreateBuilder(args);
 // ====================== DbContext ======================
 if (builder.Environment.IsProduction())
 {
-    // Считываем строку подключения из переменной окружения, которую мы задали в Render
     var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-
-    // Преобразуем URL из формата postgres://... в формат, который понимает Npgsql (Host=...; Database=...)
     var connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseNpgsql(connectionString)); // Указываем использовать PostgreSQL
+    {
+        options.UseNpgsql(connectionString);
+
+        // ← Это решает текущую ошибку
+        options.ConfigureWarnings(warnings =>
+        {
+            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
+        });
+    });
 }
 else
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    {
+        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+        // Можно добавить и сюда для разработки, если нужно
+        options.ConfigureWarnings(warnings =>
+        {
+            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning);
+        });
+    });
 }
 
 static string ConvertPostgresUrlToConnectionString(string url)
