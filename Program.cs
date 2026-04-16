@@ -10,8 +10,30 @@ using TappiruServer.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // ====================== DbContext ======================
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+if (builder.Environment.IsProduction())
+{
+    // Считываем строку подключения из переменной окружения, которую мы задали в Render
+    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+    // Преобразуем URL из формата postgres://... в формат, который понимает Npgsql (Host=...; Database=...)
+    var connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
+
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString)); // Указываем использовать PostgreSQL
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
+
+static string ConvertPostgresUrlToConnectionString(string url)
+{
+    var databaseUri = new Uri(url);
+    var userInfo = databaseUri.UserInfo.Split(':');
+    return $"Host={databaseUri.Host};Database={databaseUri.LocalPath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true;";
+}
+
 
 // ====================== Identity ======================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -81,6 +103,15 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if (builder.Environment.IsProduction())
+    {
+        // Автоматически создаёт базу данных и применяет миграции
+        dbContext.Database.Migrate();
+    }
+}
 // ====================== Middleware ======================
 if (!app.Environment.IsDevelopment())
 {
