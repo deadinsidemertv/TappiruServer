@@ -147,8 +147,28 @@ using (var scope = app.Services.CreateScope())
 
     dbContext.Database.SetCommandTimeout(180);
 
-    // Применяем только те миграции, которые ещё не применены
-    dbContext.Database.Migrate();
+    try
+    {
+        Console.WriteLine("🔄 Checking pending migrations...");
+
+        var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+
+        if (pendingMigrations.Any())
+        {
+            Console.WriteLine($"📌 Found {pendingMigrations.Count} pending migrations. Applying...");
+            dbContext.Database.Migrate();
+            Console.WriteLine("✅ All migrations applied successfully!");
+        }
+        else
+        {
+            Console.WriteLine("✅ No pending migrations.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Migration error: {ex.Message}");
+        // НЕ бросаем исключение — приложение должно запуститься даже если миграция упала
+    }
 }
 // ====================== Middleware ======================
 if (!app.Environment.IsDevelopment())

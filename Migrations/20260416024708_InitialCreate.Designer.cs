@@ -12,7 +12,7 @@ using TappiruServer.Data;
 namespace TappiruServer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260416022523_InitialCreate")]
+    [Migration("20260416024708_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
