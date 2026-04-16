@@ -546,6 +546,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
     // График рейтинга
+    const avatarInput = document.getElementById('avatarFile');
+if (avatarInput) {
+    avatarInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            // Показываем индикатор загрузки (опционально)
+            const btn = document.querySelector('.avatar-upload-btn');
+            if (btn) btn.textContent = '⏳';
+            // Отправляем форму
+            this.closest('form').submit();
+        }
+    });
+}
     const rankHistory = @Html.Raw(Json.Serialize(Model.RankHistory ?? new List<int>()));
     const ctx = document.getElementById('rankChart').getContext('2d');
     if (rankHistory && rankHistory.length > 0) {
