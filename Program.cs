@@ -38,9 +38,12 @@ else
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
             if (string.IsNullOrWhiteSpace(databaseUrl))
-                throw new InvalidOperationException("DATABASE_URL environment variable is missing in Production.");
+                throw new InvalidOperationException("DATABASE_URL is missing!");
+
+            Console.WriteLine($"🔗 DATABASE_URL found: {databaseUrl.Substring(0, Math.Min(60, databaseUrl.Length))}...");
 
             var connectionString = ConvertPostgresUrlToConnectionString(databaseUrl);
+            Console.WriteLine($"🔗 Connection string built successfully.");
 
             options.UseNpgsql(connectionString, npgsql =>
             {
@@ -68,11 +71,24 @@ else
     });
 }
 
-static string ConvertPostgresUrlToConnectionString(string url)
+static string ConvertPostgresUrlToConnectionString(string? url)
 {
+    if (string.IsNullOrWhiteSpace(url))
+        throw new InvalidOperationException("DATABASE_URL environment variable is not set or empty.");
+
     var databaseUri = new Uri(url);
-    var userInfo = databaseUri.UserInfo.Split(':');
-    return $"Host={databaseUri.Host};Database={databaseUri.LocalPath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true;";
+    var userInfo = databaseUri.UserInfo.Split(':', 2);
+
+    if (userInfo.Length != 2)
+        throw new InvalidOperationException("Invalid DATABASE_URL format.");
+
+    return $"Host={databaseUri.Host};" +
+           $"Port={databaseUri.Port};" +
+           $"Database={databaseUri.LocalPath.TrimStart('/')};" +
+           $"Username={userInfo[0]};" +
+           $"Password={userInfo[1]};" +
+           "SSL Mode=Require;" +
+           "Trust Server Certificate=true;";
 }
 
 
